@@ -72,6 +72,7 @@ export interface VacuumCardConfig {
   stats: Record<string, VacuumCardStat[]>;
   actions: Record<string, VacuumCardAction>;
   shortcuts: VacuumCardShortcut[];
+  mop_intensity: string;
   water_level: string;
 }
 

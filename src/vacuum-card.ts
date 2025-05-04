@@ -86,12 +86,27 @@ export class VacuumCard extends LitElement {
     return this.hass.states[this.config.battery];
   }
 
+  get mopIntensityEntity(): string | null {
+    if (!this.hass || !this.config.mop_intensity) {
+      return null;
+    }
+
+    return this.config.mop_intensity;
+  }
+
   get waterLevelEntity(): string | null {
     if (!this.hass || !this.config.water_level) {
       return null;
     }
 
     return this.config.water_level;
+  }
+
+  get mopIntensity(): HassEntity | null {
+    if (this.mopIntensityEntity) {
+      return this.hass.states[this.mopIntensityEntity];
+    }
+    return null;
   }
 
   get waterLevel(): HassEntity | null {
@@ -198,7 +213,15 @@ export class VacuumCard extends LitElement {
     this.callVacuumService('set_fan_speed', { request: false }, { fan_speed });
   }
 
-  private handleSelect(e: PointerEvent): void {
+  private handleMopIntensitySelect(e: PointerEvent): void {
+    const value = (<HTMLDivElement>e.target).getAttribute('value');
+    this.hass.callService('select', 'select_option', {
+      entity_id: this.mopIntensity ? this.mopIntensity.entity_id : '',
+      option: value,
+    });
+  }
+
+  private handleWaterLevelSelect(e: PointerEvent): void {
     const value = (<HTMLDivElement>e.target).getAttribute('value');
     this.hass.callService('select', 'select_option', {
       entity_id: this.waterLevel ? this.waterLevel.entity_id : '',
@@ -240,6 +263,21 @@ export class VacuumCard extends LitElement {
     return this.renderDropDown(source, sources, 'mdi:fan', this.handleSpeed);
   }
 
+  private renderMopIntensity(): Template {
+    const entity = this.mopIntensity;
+
+    if (!entity) {
+      return nothing;
+    }
+
+    return this.renderDropDown(
+      entity.state,
+      entity.attributes.options,
+      'mdi:cleaning',
+      this.handleMopIntensitySelect,
+    );
+  }
+
   private renderWaterLevel(): Template {
     const entity = this.waterLevel;
 
@@ -251,7 +289,7 @@ export class VacuumCard extends LitElement {
       entity.state,
       entity.attributes.options,
       'mdi:water',
-      this.handleSelect,
+      this.handleWaterLevelSelect,
     );
   }
 
@@ -583,7 +621,9 @@ export class VacuumCard extends LitElement {
         <div class="preview">
           <div class="header">
             <div class="tips">
-              ${this.renderSource()} ${this.renderWaterLevel()}
+              ${this.renderSource()}
+              ${this.renderMopIntensity()}
+              ${this.renderWaterLevel()}
               ${this.renderBattery()}
             </div>
             <ha-icon-button

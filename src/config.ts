@@ -32,6 +32,7 @@ export default function buildConfig(
     stats: config.stats ?? {},
     actions: config.actions ?? {},
     shortcuts: config.shortcuts ?? [],
+    mop_intensity: config.mop_intensity ?? '',
     water_level: config.water_level ?? '',
   };
 }
