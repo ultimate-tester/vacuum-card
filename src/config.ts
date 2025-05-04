@@ -34,6 +34,5 @@ export default function buildConfig(
     shortcuts: config.shortcuts ?? [],
     mop_intensity: config.mop_intensity ?? '',
     water_level: config.water_level ?? '',
-    selected_map: config.selected_map ?? '',
   };
 }

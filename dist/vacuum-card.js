@@ -4532,7 +4532,7 @@ ha-icon {
 styleInject(css_248z$1);
 
 function buildConfig(config) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
     if (!config) {
         throw new Error(localize('error.invalid_config'));
     }
@@ -4560,7 +4560,6 @@ function buildConfig(config) {
         shortcuts: (_o = config.shortcuts) !== null && _o !== void 0 ? _o : [],
         mop_intensity: (_p = config.mop_intensity) !== null && _p !== void 0 ? _p : '',
         water_level: (_q = config.water_level) !== null && _q !== void 0 ? _q : '',
-        selected_map: (_r = config.selected_map) !== null && _r !== void 0 ? _r : '',
     };
 }
 
@@ -4628,21 +4627,9 @@ let VacuumCard = class VacuumCard extends s {
         }
         return null;
     }
-    get selectedMapEntity() {
-        if (!this.hass || !this.config.selected_map) {
-            return null;
-        }
-        return this.config.selected_map;
-    }
     get waterLevel() {
         if (this.waterLevelEntity) {
             return this.hass.states[this.waterLevelEntity];
-        }
-        return null;
-    }
-    get selectedMap() {
-        if (this.selectedMapEntity) {
-            return this.hass.states[this.selectedMapEntity];
         }
         return null;
     }
@@ -4723,13 +4710,6 @@ let VacuumCard = class VacuumCard extends s {
             option: value,
         });
     }
-    handleSelectedMapSelect(e) {
-        const value = e.target.getAttribute('value');
-        this.hass.callService('select', 'select_option', {
-            entity_id: this.selectedMap ? this.selectedMap.entity_id : '',
-            option: value,
-        });
-    }
     handleVacuumAction(action, params = { request: true }) {
         return () => {
             if (!this.config.actions[action]) {
@@ -4763,13 +4743,6 @@ let VacuumCard = class VacuumCard extends s {
             return A;
         }
         return this.renderDropDown(entity.state, entity.attributes.options, 'mdi:water-percent', this.handleWaterLevelSelect);
-    }
-    renderSelectedMap() {
-        const entity = this.selectedMap;
-        if (!entity) {
-            return A;
-        }
-        return this.renderDropDown(entity.state, entity.attributes.options, 'mdi:floor-plan', this.handleSelectedMapSelect);
     }
     renderDropDown(selectedObject, items, icon, onSelected) {
         const selected = items.indexOf(selectedObject);
@@ -4874,7 +4847,7 @@ let VacuumCard = class VacuumCard extends s {
         if (!stats.length) {
             return A;
         }
-        return x ` <div class="stats">${stats}</div>`;
+        return x `<div class="stats">${stats}</div>`;
     }
     renderName() {
         const { friendly_name } = this.getAttributes(this.entity);
@@ -4913,8 +4886,7 @@ let VacuumCard = class VacuumCard extends s {
         <ha-circular-progress
           .indeterminate=${this === null || this === void 0 ? void 0 : this.requestInProgress}
           size="small"
-          style="display: ${(this === null || this === void 0 ? void 0 : this.requestInProgress) ? 'flex' : 'none'}"
-        >
+          style="display: ${(this === null || this === void 0 ? void 0 : this.requestInProgress) ? 'flex' : 'none'}">
         </ha-circular-progress>
       </div>
     `;
@@ -4992,19 +4964,12 @@ let VacuumCard = class VacuumCard extends s {
             default: {
                 const buttons = this.config.shortcuts.map(({ name, service, icon, service_data, target, link }) => {
                     if (link) {
-                        return x ` <ha-icon-button label="${name}">
-                <a
-                  rel="noreferrer"
-                  href="${link}"
-                  target="_blank"
-                  style="--icon-primary-color: var(--vc-toolbar-icon-color); color: var(--vc-toolbar-icon-color);"
-                >
-                  <ha-icon
-                    icon="${icon}"
-                    style="--icon-primary-color: var(--vc-toolbar-icon-color); color: var(--vc-toolbar-icon-color);"
-                  ></ha-icon>
-                </a>
-              </ha-icon-button>`;
+                        return x `
+                <ha-icon-button label="${name}">
+                  <a rel="noreferrer" href="${link}" target="_blank" style="--icon-primary-color: var(--vc-toolbar-icon-color); color: var(--vc-toolbar-icon-color);">
+                    <ha-icon icon="${icon}" style="--icon-primary-color: var(--vc-toolbar-icon-color); color: var(--vc-toolbar-icon-color);"></ha-icon>
+                  </a>
+                </ha-icon-button>`;
                     }
                     else {
                         const execute = () => {
@@ -5023,8 +4988,7 @@ let VacuumCard = class VacuumCard extends s {
           <ha-icon-button
             label="${localize('common.return_to_base')}"
             @click="${this.handleVacuumAction('return_to_base')}"
-          >
-            <ha-icon icon="hass:home-map-marker"></ha-icon>
+            ><ha-icon icon="hass:home-map-marker"></ha-icon>
           </ha-icon-button>
         `;
                 return x `
@@ -5032,15 +4996,13 @@ let VacuumCard = class VacuumCard extends s {
             <ha-icon-button
               label="${localize('common.start')}"
               @click="${this.handleVacuumAction('start')}"
-            >
-              <ha-icon icon="hass:play"></ha-icon>
+              ><ha-icon icon="hass:play"></ha-icon>
             </ha-icon-button>
 
             <ha-icon-button
               label="${localize('common.locate')}"
               @click="${this.handleVacuumAction('locate', { request: false })}"
-            >
-              <ha-icon icon="mdi:map-marker"></ha-icon>
+              ><ha-icon icon="mdi:map-marker"></ha-icon>
             </ha-icon-button>
 
             ${state === 'idle' ? dockButton : ''}
@@ -5059,8 +5021,8 @@ let VacuumCard = class VacuumCard extends s {
             <div class="not-available">
               ${localize('common.not_available')}
             </div>
-            <div>
-            </div>
+          <div>
+        </div>
       </ha-card>
     `;
     }
@@ -5076,7 +5038,6 @@ let VacuumCard = class VacuumCard extends s {
               ${this.renderSource()}
               ${this.renderMopIntensity()}
               ${this.renderWaterLevel()}
-              ${this.renderSelectedMap()}
               ${this.renderBattery()}
             </div>
             <ha-icon-button
@@ -5084,9 +5045,8 @@ let VacuumCard = class VacuumCard extends s {
               icon="mdi:dots-vertical"
               ?more-info="true"
               @click="${() => this.handleMore()}"
-            >
-              <ha-icon icon="mdi:dots-vertical"></ha-icon>
-            </ha-icon-button>
+              ><ha-icon icon="mdi:dots-vertical"></ha-icon
+            ></ha-icon-button>
           </div>
 
           ${this.renderMapOrImage(this.entity.state)}
