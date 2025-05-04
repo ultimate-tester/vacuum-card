@@ -1,8 +1,8 @@
-import { CSSResultGroup, LitElement, PropertyValues, html, nothing } from 'lit';
+import { CSSResultGroup, html, LitElement, nothing, PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import {
-  hasConfigOrEntityChanged,
   fireEvent,
+  hasConfigOrEntityChanged,
   HomeAssistant,
   ServiceCallRequest,
   stateIcon,
@@ -13,14 +13,14 @@ import localize from './localize';
 import styles from './styles.css';
 import buildConfig from './config';
 import {
+  HassEntity,
   Template,
+  VacuumActionParams,
   VacuumCardAction,
   VacuumCardConfig,
   VacuumEntity,
-  HassEntity,
   VacuumEntityState,
   VacuumServiceCallParams,
-  VacuumActionParams,
 } from './types';
 import DEFAULT_IMAGE from './vacuum.svg';
 
@@ -109,9 +109,24 @@ export class VacuumCard extends LitElement {
     return null;
   }
 
+  get selectedMapEntity(): string | null {
+    if (!this.hass || !this.config.selected_map) {
+      return null;
+    }
+
+    return this.config.selected_map;
+  }
+
   get waterLevel(): HassEntity | null {
     if (this.waterLevelEntity) {
       return this.hass.states[this.waterLevelEntity];
+    }
+    return null;
+  }
+
+  get selectedMap(): HassEntity | null {
+    if (this.selectedMapEntity) {
+      return this.hass.states[this.selectedMapEntity];
     }
     return null;
   }
@@ -229,6 +244,14 @@ export class VacuumCard extends LitElement {
     });
   }
 
+  private handleSelectedMapSelect(e: PointerEvent): void {
+    const value = (<HTMLDivElement>e.target).getAttribute('value');
+    this.hass.callService('select', 'select_option', {
+      entity_id: this.selectedMap ? this.selectedMap.entity_id : '',
+      option: value,
+    });
+  }
+
   private handleVacuumAction(
     action: string,
     params: VacuumActionParams = { request: true },
@@ -290,6 +313,21 @@ export class VacuumCard extends LitElement {
       entity.attributes.options,
       'mdi:water-percent',
       this.handleWaterLevelSelect,
+    );
+  }
+
+  private renderSelectedMap(): Template {
+    const entity = this.selectedMap;
+
+    if (!entity) {
+      return nothing;
+    }
+
+    return this.renderDropDown(
+      entity.state,
+      entity.attributes.options,
+      'mdi:floor-plan',
+      this.handleSelectedMapSelect,
     );
   }
 
@@ -418,7 +456,7 @@ export class VacuumCard extends LitElement {
       return nothing;
     }
 
-    return html`<div class="stats">${stats}</div>`;
+    return html` <div class="stats">${stats}</div>`;
   }
 
   private renderName(): Template {
@@ -462,7 +500,8 @@ export class VacuumCard extends LitElement {
         <ha-circular-progress
           .indeterminate=${this?.requestInProgress}
           size="small"
-          style="display: ${this?.requestInProgress ? 'flex' : 'none'}">
+          style="display: ${this?.requestInProgress ? 'flex' : 'none'}"
+        >
         </ha-circular-progress>
       </div>
     `;
@@ -545,12 +584,19 @@ export class VacuumCard extends LitElement {
         const buttons = this.config.shortcuts.map(
           ({ name, service, icon, service_data, target, link }) => {
             if (link) {
-              return html`
-                <ha-icon-button label="${name}">
-                  <a rel="noreferrer" href="${link}" target="_blank" style="--icon-primary-color: var(--vc-toolbar-icon-color); color: var(--vc-toolbar-icon-color);">
-                    <ha-icon icon="${icon}" style="--icon-primary-color: var(--vc-toolbar-icon-color); color: var(--vc-toolbar-icon-color);"></ha-icon>
-                  </a>
-                </ha-icon-button>`;
+              return html` <ha-icon-button label="${name}">
+                <a
+                  rel="noreferrer"
+                  href="${link}"
+                  target="_blank"
+                  style="--icon-primary-color: var(--vc-toolbar-icon-color); color: var(--vc-toolbar-icon-color);"
+                >
+                  <ha-icon
+                    icon="${icon}"
+                    style="--icon-primary-color: var(--vc-toolbar-icon-color); color: var(--vc-toolbar-icon-color);"
+                  ></ha-icon>
+                </a>
+              </ha-icon-button>`;
             } else {
               const execute = () => {
                 if (service) {
@@ -570,7 +616,8 @@ export class VacuumCard extends LitElement {
           <ha-icon-button
             label="${localize('common.return_to_base')}"
             @click="${this.handleVacuumAction('return_to_base')}"
-            ><ha-icon icon="hass:home-map-marker"></ha-icon>
+          >
+            <ha-icon icon="hass:home-map-marker"></ha-icon>
           </ha-icon-button>
         `;
 
@@ -579,13 +626,15 @@ export class VacuumCard extends LitElement {
             <ha-icon-button
               label="${localize('common.start')}"
               @click="${this.handleVacuumAction('start')}"
-              ><ha-icon icon="hass:play"></ha-icon>
+            >
+              <ha-icon icon="hass:play"></ha-icon>
             </ha-icon-button>
 
             <ha-icon-button
               label="${localize('common.locate')}"
               @click="${this.handleVacuumAction('locate', { request: false })}"
-              ><ha-icon icon="mdi:map-marker"></ha-icon>
+            >
+              <ha-icon icon="mdi:map-marker"></ha-icon>
             </ha-icon-button>
 
             ${state === 'idle' ? dockButton : ''}
@@ -605,8 +654,8 @@ export class VacuumCard extends LitElement {
             <div class="not-available">
               ${localize('common.not_available')}
             </div>
-          <div>
-        </div>
+            <div>
+            </div>
       </ha-card>
     `;
   }
@@ -624,6 +673,7 @@ export class VacuumCard extends LitElement {
               ${this.renderSource()}
               ${this.renderMopIntensity()}
               ${this.renderWaterLevel()}
+              ${this.renderSelectedMap()}
               ${this.renderBattery()}
             </div>
             <ha-icon-button
@@ -631,8 +681,9 @@ export class VacuumCard extends LitElement {
               icon="mdi:dots-vertical"
               ?more-info="true"
               @click="${() => this.handleMore()}"
-              ><ha-icon icon="mdi:dots-vertical"></ha-icon
-            ></ha-icon-button>
+            >
+              <ha-icon icon="mdi:dots-vertical"></ha-icon>
+            </ha-icon-button>
           </div>
 
           ${this.renderMapOrImage(this.entity.state)}

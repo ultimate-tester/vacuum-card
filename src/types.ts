@@ -74,6 +74,7 @@ export interface VacuumCardConfig {
   shortcuts: VacuumCardShortcut[];
   mop_intensity: string;
   water_level: string;
+  selected_map: string;
 }
 
 export interface VacuumServiceCallParams {
