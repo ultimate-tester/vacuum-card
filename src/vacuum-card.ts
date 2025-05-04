@@ -273,7 +273,7 @@ export class VacuumCard extends LitElement {
     return this.renderDropDown(
       entity.state,
       entity.attributes.options,
-      'mdi:cleaning',
+      'mdi:water',
       this.handleMopIntensitySelect,
     );
   }
@@ -288,7 +288,7 @@ export class VacuumCard extends LitElement {
     return this.renderDropDown(
       entity.state,
       entity.attributes.options,
-      'mdi:water',
+      'mdi:water-percent',
       this.handleWaterLevelSelect,
     );
   }

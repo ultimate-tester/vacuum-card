@@ -4735,14 +4735,14 @@ let VacuumCard = class VacuumCard extends s {
         if (!entity) {
             return A;
         }
-        return this.renderDropDown(entity.state, entity.attributes.options, 'mdi:cleaning', this.handleMopIntensitySelect);
+        return this.renderDropDown(entity.state, entity.attributes.options, 'mdi:water', this.handleMopIntensitySelect);
     }
     renderWaterLevel() {
         const entity = this.waterLevel;
         if (!entity) {
             return A;
         }
-        return this.renderDropDown(entity.state, entity.attributes.options, 'mdi:water', this.handleWaterLevelSelect);
+        return this.renderDropDown(entity.state, entity.attributes.options, 'mdi:water-percent', this.handleWaterLevelSelect);
     }
     renderDropDown(selectedObject, items, icon, onSelected) {
         const selected = items.indexOf(selectedObject);
