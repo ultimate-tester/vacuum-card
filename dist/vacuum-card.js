@@ -4787,10 +4787,7 @@ let VacuumCard = class VacuumCard extends s {
               <mwc-list-item
                 ?activated=${selected === index}
                 value=${item}
-                @click=${(e) => {
-            e.stopPropagation();
-            onSelected(e);
-        }}
+                @click=${onSelected}
               >
                 ${localize(`source.${item.toLowerCase()}`) || item}
               </mwc-list-item>

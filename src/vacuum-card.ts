@@ -354,10 +354,7 @@ export class VacuumCard extends LitElement {
               <mwc-list-item
                 ?activated=${selected === index}
                 value=${item}
-                @click=${(e: Event) => {
-                  e.stopPropagation();
-                  onSelected(e);
-                }}
+                @click=${onSelected}
               >
                 ${localize(`source.${item.toLowerCase()}`) || item}
               </mwc-list-item>
