@@ -209,11 +209,19 @@ export class VacuumCard extends LitElement {
   }
 
   private handleSpeed(e: PointerEvent): void {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
     const fan_speed = (<HTMLDivElement>e.target).getAttribute('value');
     this.callVacuumService('set_fan_speed', { request: false }, { fan_speed });
   }
 
   private handleMopIntensitySelect(e: PointerEvent): void {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
     const value = (<HTMLDivElement>e.target).getAttribute('value');
     this.hass.callService('select', 'select_option', {
       entity_id: this.mopIntensity ? this.mopIntensity.entity_id : '',
@@ -222,6 +230,10 @@ export class VacuumCard extends LitElement {
   }
 
   private handleWaterLevelSelect(e: PointerEvent): void {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
     const value = (<HTMLDivElement>e.target).getAttribute('value');
     this.hass.callService('select', 'select_option', {
       entity_id: this.waterLevel ? this.waterLevel.entity_id : '',
@@ -320,7 +332,7 @@ export class VacuumCard extends LitElement {
               >
                 ${localize(`source.${item.toLowerCase()}`) || item}
               </mwc-list-item>
-            `,
+            `, 
           )}
         </ha-button-menu>
       </div>

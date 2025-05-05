@@ -4693,10 +4693,16 @@ let VacuumCard = class VacuumCard extends s {
         }
     }
     handleSpeed(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         const fan_speed = e.target.getAttribute('value');
         this.callVacuumService('set_fan_speed', { request: false }, { fan_speed });
     }
     handleMopIntensitySelect(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         const value = e.target.getAttribute('value');
         this.hass.callService('select', 'select_option', {
             entity_id: this.mopIntensity ? this.mopIntensity.entity_id : '',
@@ -4704,6 +4710,9 @@ let VacuumCard = class VacuumCard extends s {
         });
     }
     handleWaterLevelSelect(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         const value = e.target.getAttribute('value');
         this.hass.callService('select', 'select_option', {
             entity_id: this.waterLevel ? this.waterLevel.entity_id : '',
