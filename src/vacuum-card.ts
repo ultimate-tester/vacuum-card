@@ -339,7 +339,7 @@ export class VacuumCard extends LitElement {
     return this.renderDropDown(
       entity.state,
       entity.attributes.options,
-      'floor-plan',
+      'mdi:floor-plan',
       this.handleSelectedMapSelect,
     );
   }
@@ -414,7 +414,25 @@ export class VacuumCard extends LitElement {
       return nothing;
     }
 
-    if (this.map) {
+    if (this.selectedMap) {
+      const formattedVacuumName = this.config.entity.substring(7).toLowerCase();
+
+      const formattedMapName = this.selectedMap.state
+        .replace(' ', '_')
+        .toLowerCase();
+      const mapEntityName = `image.${formattedVacuumName}_${formattedMapName}`;
+      const map = this.hass.states[mapEntityName];
+
+      return map && map.attributes.entity_picture
+        ? html`
+            <img
+              class="map"
+              src="${map.attributes.entity_picture}&v=${Date.now()}"
+              @click=${() => this.handleMore(mapEntityName)}
+            />
+          `
+        : nothing;
+    } else if (this.map) {
       return this.map && this.map.attributes.entity_picture
         ? html`
             <img
@@ -698,10 +716,8 @@ export class VacuumCard extends LitElement {
         <div class="preview">
           <div class="header">
             <div class="tips">
-              ${this.renderSource()}
-              ${this.renderMopIntensity()}
-              ${this.renderWaterLevel()}
-              ${this.renderSelectedMap()}
+              ${this.renderSource()} ${this.renderMopIntensity()}
+              ${this.renderWaterLevel()} ${this.renderSelectedMap()}
               ${this.renderBattery()}
             </div>
             <ha-icon-button

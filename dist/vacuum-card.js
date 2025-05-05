@@ -4782,7 +4782,7 @@ let VacuumCard = class VacuumCard extends s {
         if (!entity) {
             return A;
         }
-        return this.renderDropDown(entity.state, entity.attributes.options, 'floor-plan', this.handleSelectedMapSelect);
+        return this.renderDropDown(entity.state, entity.attributes.options, 'mdi:floor-plan', this.handleSelectedMapSelect);
     }
     renderWaterLevel() {
         const entity = this.waterLevel;
@@ -4835,7 +4835,24 @@ let VacuumCard = class VacuumCard extends s {
         if (this.config.compact_view) {
             return A;
         }
-        if (this.map) {
+        if (this.selectedMap) {
+            const formattedVacuumName = this.config.entity.substring(7).toLowerCase();
+            const formattedMapName = this.selectedMap.state
+                .replace(' ', '_')
+                .toLowerCase();
+            const mapEntityName = `image.${formattedVacuumName}_${formattedMapName}`;
+            const map = this.hass.states[mapEntityName];
+            return map && map.attributes.entity_picture
+                ? x `
+            <img
+              class="map"
+              src="${map.attributes.entity_picture}&v=${Date.now()}"
+              @click=${() => this.handleMore(mapEntityName)}
+            />
+          `
+                : A;
+        }
+        else if (this.map) {
             return this.map && this.map.attributes.entity_picture
                 ? x `
             <img
@@ -5093,10 +5110,8 @@ let VacuumCard = class VacuumCard extends s {
         <div class="preview">
           <div class="header">
             <div class="tips">
-              ${this.renderSource()}
-              ${this.renderMopIntensity()}
-              ${this.renderWaterLevel()}
-              ${this.renderSelectedMap()}
+              ${this.renderSource()} ${this.renderMopIntensity()}
+              ${this.renderWaterLevel()} ${this.renderSelectedMap()}
               ${this.renderBattery()}
             </div>
             <ha-icon-button
