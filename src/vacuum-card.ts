@@ -1,8 +1,8 @@
-import { CSSResultGroup, LitElement, PropertyValues, html, nothing } from 'lit';
+import { CSSResultGroup, html, LitElement, nothing, PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import {
-  hasConfigOrEntityChanged,
   fireEvent,
+  hasConfigOrEntityChanged,
   HomeAssistant,
   ServiceCallRequest,
   stateIcon,
@@ -13,14 +13,14 @@ import localize from './localize';
 import styles from './styles.css';
 import buildConfig from './config';
 import {
+  HassEntity,
   Template,
+  VacuumActionParams,
   VacuumCardAction,
   VacuumCardConfig,
   VacuumEntity,
-  HassEntity,
   VacuumEntityState,
   VacuumServiceCallParams,
-  VacuumActionParams,
 } from './types';
 import DEFAULT_IMAGE from './vacuum.svg';
 
@@ -94,6 +94,14 @@ export class VacuumCard extends LitElement {
     return this.config.mop_intensity;
   }
 
+  get selectedMapEntity(): string | null {
+    if (!this.hass || !this.config.selected_map) {
+      return null;
+    }
+
+    return this.config.selected_map;
+  }
+
   get waterLevelEntity(): string | null {
     if (!this.hass || !this.config.water_level) {
       return null;
@@ -105,6 +113,13 @@ export class VacuumCard extends LitElement {
   get mopIntensity(): HassEntity | null {
     if (this.mopIntensityEntity) {
       return this.hass.states[this.mopIntensityEntity];
+    }
+    return null;
+  }
+
+  get selectedMap(): HassEntity | null {
+    if (this.selectedMapEntity) {
+      return this.hass.states[this.selectedMapEntity];
     }
     return null;
   }
@@ -137,10 +152,38 @@ export class VacuumCard extends LitElement {
     );
   }
 
+  public hasMopIntensityChanged(changedProps: PropertyValues): boolean {
+    if (this.mopIntensityEntity === null || this.mopIntensity === null) {
+      return false;
+    }
+
+    return (
+      this.hass &&
+      !!this.config.water_level &&
+      changedProps.get('hass').states[this.mopIntensityEntity].state !==
+        this.mopIntensity.state
+    );
+  }
+
+  public hasSelectedMapChanged(changedProps: PropertyValues): boolean {
+    if (this.selectedMapEntity === null || this.selectedMap === null) {
+      return false;
+    }
+
+    return (
+      this.hass &&
+      !!this.config.water_level &&
+      changedProps.get('hass').states[this.selectedMapEntity].state !==
+        this.selectedMap.state
+    );
+  }
+
   public shouldUpdate(changedProps: PropertyValues): boolean {
     return (
       hasConfigOrEntityChanged(this, changedProps, false) ||
-      this.hasWaterLevelChanged(changedProps)
+      this.hasWaterLevelChanged(changedProps) ||
+      this.hasMopIntensityChanged(changedProps) ||
+      this.hasSelectedMapChanged(changedProps)
     );
   }
 
@@ -209,19 +252,11 @@ export class VacuumCard extends LitElement {
   }
 
   private handleSpeed(e: PointerEvent): void {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
     const fan_speed = (<HTMLDivElement>e.target).getAttribute('value');
     this.callVacuumService('set_fan_speed', { request: false }, { fan_speed });
   }
 
   private handleMopIntensitySelect(e: PointerEvent): void {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
     const value = (<HTMLDivElement>e.target).getAttribute('value');
     this.hass.callService('select', 'select_option', {
       entity_id: this.mopIntensity ? this.mopIntensity.entity_id : '',
@@ -229,11 +264,15 @@ export class VacuumCard extends LitElement {
     });
   }
 
-  private handleWaterLevelSelect(e: PointerEvent): void {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
+  private handleSelectedMapSelect(e: PointerEvent): void {
+    const value = (<HTMLDivElement>e.target).getAttribute('value');
+    this.hass.callService('select', 'select_option', {
+      entity_id: this.selectedMap ? this.selectedMap.entity_id : '',
+      option: value,
+    });
+  }
 
+  private handleWaterLevelSelect(e: PointerEvent): void {
     const value = (<HTMLDivElement>e.target).getAttribute('value');
     this.hass.callService('select', 'select_option', {
       entity_id: this.waterLevel ? this.waterLevel.entity_id : '',
@@ -290,6 +329,21 @@ export class VacuumCard extends LitElement {
     );
   }
 
+  private renderSelectedMap(): Template {
+    const entity = this.selectedMap;
+
+    if (!entity) {
+      return nothing;
+    }
+
+    return this.renderDropDown(
+      entity.state,
+      entity.attributes.options,
+      'floor-plan',
+      this.handleSelectedMapSelect,
+    );
+  }
+
   private renderWaterLevel(): Template {
     const entity = this.waterLevel;
 
@@ -332,7 +386,7 @@ export class VacuumCard extends LitElement {
               >
                 ${localize(`source.${item.toLowerCase()}`) || item}
               </mwc-list-item>
-            `, 
+            `,
           )}
         </ha-button-menu>
       </div>
@@ -430,7 +484,7 @@ export class VacuumCard extends LitElement {
       return nothing;
     }
 
-    return html`<div class="stats">${stats}</div>`;
+    return html` <div class="stats">${stats}</div>`;
   }
 
   private renderName(): Template {
@@ -474,7 +528,8 @@ export class VacuumCard extends LitElement {
         <ha-circular-progress
           .indeterminate=${this?.requestInProgress}
           size="small"
-          style="display: ${this?.requestInProgress ? 'flex' : 'none'}">
+          style="display: ${this?.requestInProgress ? 'flex' : 'none'}"
+        >
         </ha-circular-progress>
       </div>
     `;
@@ -557,12 +612,19 @@ export class VacuumCard extends LitElement {
         const buttons = this.config.shortcuts.map(
           ({ name, service, icon, service_data, target, link }) => {
             if (link) {
-              return html`
-                <ha-icon-button label="${name}">
-                  <a rel="noreferrer" href="${link}" target="_blank" style="--icon-primary-color: var(--vc-toolbar-icon-color); color: var(--vc-toolbar-icon-color);">
-                    <ha-icon icon="${icon}" style="--icon-primary-color: var(--vc-toolbar-icon-color); color: var(--vc-toolbar-icon-color);"></ha-icon>
-                  </a>
-                </ha-icon-button>`;
+              return html` <ha-icon-button label="${name}">
+                <a
+                  rel="noreferrer"
+                  href="${link}"
+                  target="_blank"
+                  style="--icon-primary-color: var(--vc-toolbar-icon-color); color: var(--vc-toolbar-icon-color);"
+                >
+                  <ha-icon
+                    icon="${icon}"
+                    style="--icon-primary-color: var(--vc-toolbar-icon-color); color: var(--vc-toolbar-icon-color);"
+                  ></ha-icon>
+                </a>
+              </ha-icon-button>`;
             } else {
               const execute = () => {
                 if (service) {
@@ -582,7 +644,8 @@ export class VacuumCard extends LitElement {
           <ha-icon-button
             label="${localize('common.return_to_base')}"
             @click="${this.handleVacuumAction('return_to_base')}"
-            ><ha-icon icon="hass:home-map-marker"></ha-icon>
+          >
+            <ha-icon icon="hass:home-map-marker"></ha-icon>
           </ha-icon-button>
         `;
 
@@ -591,13 +654,15 @@ export class VacuumCard extends LitElement {
             <ha-icon-button
               label="${localize('common.start')}"
               @click="${this.handleVacuumAction('start')}"
-              ><ha-icon icon="hass:play"></ha-icon>
+            >
+              <ha-icon icon="hass:play"></ha-icon>
             </ha-icon-button>
 
             <ha-icon-button
               label="${localize('common.locate')}"
               @click="${this.handleVacuumAction('locate', { request: false })}"
-              ><ha-icon icon="mdi:map-marker"></ha-icon>
+            >
+              <ha-icon icon="mdi:map-marker"></ha-icon>
             </ha-icon-button>
 
             ${state === 'idle' ? dockButton : ''}
@@ -617,8 +682,8 @@ export class VacuumCard extends LitElement {
             <div class="not-available">
               ${localize('common.not_available')}
             </div>
-          <div>
-        </div>
+            <div>
+            </div>
       </ha-card>
     `;
   }
@@ -636,6 +701,7 @@ export class VacuumCard extends LitElement {
               ${this.renderSource()}
               ${this.renderMopIntensity()}
               ${this.renderWaterLevel()}
+              ${this.renderSelectedMap()}
               ${this.renderBattery()}
             </div>
             <ha-icon-button
@@ -643,8 +709,9 @@ export class VacuumCard extends LitElement {
               icon="mdi:dots-vertical"
               ?more-info="true"
               @click="${() => this.handleMore()}"
-              ><ha-icon icon="mdi:dots-vertical"></ha-icon
-            ></ha-icon-button>
+            >
+              <ha-icon icon="mdi:dots-vertical"></ha-icon>
+            </ha-icon-button>
           </div>
 
           ${this.renderMapOrImage(this.entity.state)}
