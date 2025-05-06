@@ -414,34 +414,49 @@ export class VacuumCard extends LitElement {
       return nothing;
     }
 
-    if (this.selectedMap) {
-      const formattedVacuumName = this.config.entity.substring(7).toLowerCase();
+    // Only show the map when busy with a cleaning routine
+    if (
+      this.entity.state === 'on' ||
+      this.entity.state === 'auto' ||
+      this.entity.state === 'spot' ||
+      this.entity.state === 'edge' ||
+      this.entity.state === 'single_room' ||
+      this.entity.state === 'mowing' ||
+      this.entity.state === 'edgecut' ||
+      this.entity.state === 'cleaning' ||
+      this.entity.state === 'paused'
+    ) {
+      if (this.selectedMap) {
+        const formattedVacuumName = this.config.entity
+          .substring(7)
+          .toLowerCase();
 
-      const formattedMapName = this.selectedMap.state
-        .replace(' ', '_')
-        .toLowerCase();
-      const mapEntityName = `image.${formattedVacuumName}_${formattedMapName}`;
-      const map = this.hass.states[mapEntityName];
+        const formattedMapName = this.selectedMap.state
+          .replace(' ', '_')
+          .toLowerCase();
+        const mapEntityName = `image.${formattedVacuumName}_${formattedMapName}`;
+        const map = this.hass.states[mapEntityName];
 
-      return map && map.attributes.entity_picture
-        ? html`
-            <img
-              class="map"
-              src="${map.attributes.entity_picture}&v=${Date.now()}"
-              @click=${() => this.handleMore(mapEntityName)}
-            />
-          `
-        : nothing;
-    } else if (this.map) {
-      return this.map && this.map.attributes.entity_picture
-        ? html`
-            <img
-              class="map"
-              src="${this.map.attributes.entity_picture}&v=${Date.now()}"
-              @click=${() => this.handleMore(this.config.map)}
-            />
-          `
-        : nothing;
+        return map && map.attributes.entity_picture
+          ? html`
+              <img
+                class="map"
+                src="${map.attributes.entity_picture}&v=${Date.now()}"
+                @click=${() => this.handleMore(mapEntityName)}
+               alt=""/>
+            `
+          : nothing;
+      } else if (this.map) {
+        return this.map && this.map.attributes.entity_picture
+          ? html`
+              <img
+                class="map"
+                src="${this.map.attributes.entity_picture}&v=${Date.now()}"
+                @click=${() => this.handleMore(this.config.map)}
+               alt=""/>
+            `
+          : nothing;
+      }
     }
 
     const src =
@@ -453,7 +468,7 @@ export class VacuumCard extends LitElement {
         class="vacuum ${state}${animated}"
         src="${src}"
         @click="${() => this.handleMore()}"
-      />
+       alt=""/>
     `;
   }
 
@@ -512,7 +527,7 @@ export class VacuumCard extends LitElement {
       return nothing;
     }
 
-    return html` <div class="vacuum-name">${friendly_name}</div> `;
+    return html` <div class="vacuum-name">${friendly_name}</div>`;
   }
 
   private renderStatus(): Template {
@@ -525,7 +540,7 @@ export class VacuumCard extends LitElement {
       const localizedStatus =
         localize(`status.${status.toLowerCase()}`) || status;
       s = html`
-        <span class="status-text" alt=${localizedStatus}>
+        <span class="status-text" title=${localizedStatus}>
           ${localizedStatus}
         </span>
       `;

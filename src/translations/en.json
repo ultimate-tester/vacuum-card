@@ -40,6 +40,9 @@
     "quiet": "Quiet",
     "auto": "Auto",
     "balanced": "Balanced",
+    "mild": "Mild",
+    "moderate": "Moderate",
+    "intense": "Intense",
     "custom": "Custom",
     "off": "Off"
   },

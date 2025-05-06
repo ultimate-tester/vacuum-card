@@ -2380,6 +2380,9 @@ var source$k = {
 	quiet: "Quiet",
 	auto: "Auto",
 	balanced: "Balanced",
+	mild: "Mild",
+	moderate: "Moderate",
+	intense: "Intense",
 	custom: "Custom",
 	off: "Off"
 };
@@ -4835,33 +4838,46 @@ let VacuumCard = class VacuumCard extends s {
         if (this.config.compact_view) {
             return A;
         }
-        if (this.selectedMap) {
-            const formattedVacuumName = this.config.entity.substring(7).toLowerCase();
-            const formattedMapName = this.selectedMap.state
-                .replace(' ', '_')
-                .toLowerCase();
-            const mapEntityName = `image.${formattedVacuumName}_${formattedMapName}`;
-            const map = this.hass.states[mapEntityName];
-            return map && map.attributes.entity_picture
-                ? x `
-            <img
-              class="map"
-              src="${map.attributes.entity_picture}&v=${Date.now()}"
-              @click=${() => this.handleMore(mapEntityName)}
-            />
-          `
-                : A;
-        }
-        else if (this.map) {
-            return this.map && this.map.attributes.entity_picture
-                ? x `
-            <img
-              class="map"
-              src="${this.map.attributes.entity_picture}&v=${Date.now()}"
-              @click=${() => this.handleMore(this.config.map)}
-            />
-          `
-                : A;
+        // Only show the map when busy with a cleaning routine
+        if (this.entity.state === 'on' ||
+            this.entity.state === 'auto' ||
+            this.entity.state === 'spot' ||
+            this.entity.state === 'edge' ||
+            this.entity.state === 'single_room' ||
+            this.entity.state === 'mowing' ||
+            this.entity.state === 'edgecut' ||
+            this.entity.state === 'cleaning' ||
+            this.entity.state === 'paused') {
+            if (this.selectedMap) {
+                const formattedVacuumName = this.config.entity
+                    .substring(7)
+                    .toLowerCase();
+                const formattedMapName = this.selectedMap.state
+                    .replace(' ', '_')
+                    .toLowerCase();
+                const mapEntityName = `image.${formattedVacuumName}_${formattedMapName}`;
+                const map = this.hass.states[mapEntityName];
+                return map && map.attributes.entity_picture
+                    ? x `
+              <img
+                class="map"
+                src="${map.attributes.entity_picture}&v=${Date.now()}"
+                @click=${() => this.handleMore(mapEntityName)}
+               alt=""/>
+            `
+                    : A;
+            }
+            else if (this.map) {
+                return this.map && this.map.attributes.entity_picture
+                    ? x `
+              <img
+                class="map"
+                src="${this.map.attributes.entity_picture}&v=${Date.now()}"
+                @click=${() => this.handleMore(this.config.map)}
+               alt=""/>
+            `
+                    : A;
+            }
         }
         const src = this.config.image === 'default' ? img : this.config.image;
         const animated = this.config.animated ? ' animated' : '';
@@ -4870,7 +4886,7 @@ let VacuumCard = class VacuumCard extends s {
         class="vacuum ${state}${animated}"
         src="${src}"
         @click="${() => this.handleMore()}"
-      />
+       alt=""/>
     `;
     }
     renderStats(state) {
@@ -4918,7 +4934,7 @@ let VacuumCard = class VacuumCard extends s {
         if (!this.config.show_name) {
             return A;
         }
-        return x ` <div class="vacuum-name">${friendly_name}</div> `;
+        return x ` <div class="vacuum-name">${friendly_name}</div>`;
     }
     renderStatus() {
         const { status } = this.getAttributes(this.entity);
@@ -4929,7 +4945,7 @@ let VacuumCard = class VacuumCard extends s {
         if (this.config.status_template === undefined) {
             const localizedStatus = localize(`status.${status.toLowerCase()}`) || status;
             s = x `
-        <span class="status-text" alt=${localizedStatus}>
+        <span class="status-text" title=${localizedStatus}>
           ${localizedStatus}
         </span>
       `;
