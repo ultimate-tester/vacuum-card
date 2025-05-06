@@ -4799,20 +4799,21 @@ let VacuumCard = class VacuumCard extends s {
         return x `
       <div class="tip">
         <ha-button-menu @click="${(e) => e.stopPropagation()}">
-          <ha-icon-button
-            slot="trigger"
-            .label=${localize(`source.${selectedObject.toLowerCase()}`) || selectedObject}
-            .path=${icon}
-          ></ha-icon-button>
-          
+          <div slot="trigger">
+            <ha-icon icon="${icon}"></ha-icon>
+            <span class="icon-title">
+              ${localize(`source.${selectedObject.toLowerCase()}`) ||
+            selectedObject}
+            </span>
+          </div>
           ${items.map((item, index) => x `
-              <ha-list-item
+              <mwc-list-item
                 ?activated=${selected === index}
                 value=${item}
                 @click=${onSelected}
               >
                 ${localize(`source.${item.toLowerCase()}`) || item}
-              </ha-list-item>
+              </mwc-list-item>
             `)}
         </ha-button-menu>
       </div>
@@ -4847,8 +4848,7 @@ let VacuumCard = class VacuumCard extends s {
             this.entity.state === 'edgecut' ||
             this.entity.state === 'cleaning' ||
             this.entity.state === 'paused') {
-            if (this.selectedMap && this.selectedMap.state !== 'unknown') {
-                // Might be unknown while "positioning", unable to show map then
+            if (this.selectedMap) {
                 const formattedVacuumName = this.config.entity
                     .substring(7)
                     .toLowerCase();
