@@ -370,22 +370,21 @@ export class VacuumCard extends LitElement {
     return html`
       <div class="tip">
         <ha-button-menu @click="${(e: Event) => e.stopPropagation()}">
-          <div slot="trigger">
-            <ha-icon icon="${icon}"></ha-icon>
-            <span class="icon-title">
-              ${localize(`source.${selectedObject.toLowerCase()}`) ||
-              selectedObject}
-            </span>
-          </div>
+          <ha-icon-button
+            slot="trigger"
+            .label=${localize(`source.${selectedObject.toLowerCase()}`) || selectedObject}
+            .path=${icon}
+          ></ha-icon-button>
+          
           ${items.map(
             (item: string, index: number) => html`
-              <mwc-list-item
+              <ha-list-item
                 ?activated=${selected === index}
                 value=${item}
                 @click=${onSelected}
               >
                 ${localize(`source.${item.toLowerCase()}`) || item}
-              </mwc-list-item>
+              </ha-list-item>
             `,
           )}
         </ha-button-menu>
@@ -426,7 +425,8 @@ export class VacuumCard extends LitElement {
       this.entity.state === 'cleaning' ||
       this.entity.state === 'paused'
     ) {
-      if (this.selectedMap) {
+      if (this.selectedMap && this.selectedMap.state !== 'unknown') {
+        // Might be unknown while "positioning", unable to show map then
         const formattedVacuumName = this.config.entity
           .substring(7)
           .toLowerCase();
